@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía MCP para Revit — BIM al Toque</title>
+<style>
+:root {
+  --green: #fabc5f;
+  --green-dark: #d99030;
+  --green-bg: #fef3dc;
+  --green-text: #7a4800;
+  --bg: #0f1117;
+  --bg2: #1a1d27;
+  --bg3: #22263a;
+  --border: rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.18);
+  --text: #e8eaf0;
+  --text-muted: #7a7f96;
+  --text-dim: #4a4f6a;
+  --mono: 'Courier New', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius: 10px;
+  --step-size: 30px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--green); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(250,188,95,0.12);
+  color: var(--green);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* HEADER */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg2);
+}
+.header-logo {
+  width: 36px; height: 36px;
+  background: var(--green);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.header-logo svg { width: 20px; height: 20px; fill: #7a4800; }
+.header-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.header-badge {
+  margin-left: auto;
+  font-size: 11px; font-weight: 500;
+  background: rgba(250,188,95,0.15);
+  color: var(--green);
+  border: 1px solid rgba(250,188,95,0.3);
+  border-radius: 100px;
+  padding: 3px 12px;
+}
+
+/* MAIN */
+.main { max-width: 780px; margin: 0 auto; padding: 32px 24px 64px; }
+
+/* REPO TABS */
+.repo-tabs {
+  display: flex; gap: 6px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.repo-tab {
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  color: var(--text-muted);
+  background: transparent;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 7px;
+  user-select: none;
+}
+.repo-tab:hover { color: var(--text); background: var(--bg3); }
+.repo-tab.active {
+  background: var(--green);
+  color: #7a4800;
+  border-color: var(--green);
+  font-weight: 600;
+}
+.repo-tab svg { width: 15px; height: 15px; fill: currentColor; }
+
+/* PANELS */
+.repo-panel { display: none; padding-top: 24px; }
+.repo-panel.active { display: block; }
+
+/* PREREQS */
+.prereqs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500; padding: 4px 12px;
+  border-radius: 100px;
+}
+.tag-req { background: rgba(180,140,40,0.12); color: #c49a20; border: 1px solid rgba(180,140,40,0.25); }
+.tag-note { background: var(--bg3); color: var(--text-muted); border: 1px solid var(--border); }
+.prereq-note {
+  font-size: 12px; color: var(--text-muted);
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  margin-bottom: 20px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.prereq-note svg { width: 14px; height: 14px; fill: var(--text-muted); flex-shrink: 0; margin-top: 1px; }
+
+/* PROGRESS */
+.progress-wrap { margin-bottom: 20px; }
+.progress-label { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 7px; }
+.progress-bar-outer { background: var(--bg3); border-radius: 100px; height: 6px; overflow: hidden; }
+.progress-bar-inner { height: 100%; background: var(--green); border-radius: 100px; transition: width 0.4s ease; }
+
+/* STEPS */
+.steps { display: flex; flex-direction: column; }
+.step {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 16px 0; border-bottom: 1px solid var(--border);
+}
+.step:last-child { border-bottom: none; }
+/* El número solo colapsa/expande */
+.step-num {
+  min-width: var(--step-size); height: var(--step-size);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0;
+  background: var(--bg3); border: 1.5px solid var(--border-strong);
+  color: var(--text-muted); transition: all 0.2s;
+  cursor: pointer;
+}
+.step.active .step-num { background: rgba(250,188,95,0.15); border-color: var(--green); color: var(--green); }
+.step-body { flex: 1; }
+/* Header del paso: contiene label + checkbox */
+.step-header {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: default;
+}
+.step-label { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; cursor: pointer; }
+.step.done .step-label { color: var(--text-muted); opacity: 0.6; }
+.step.active .step-label { color: var(--text); }
+/* Checkbox independiente */
+.step-check {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border-radius: 50%; border: 1.5px solid var(--border-strong);
+  background: var(--bg3); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; margin-left: 10px;
+}
+.step-check:hover { border-color: var(--green); }
+.step.done .step-check { background: var(--green); border-color: var(--green); }
+.step-desc {
+  font-size: 13px; color: var(--text-muted);
+  margin-top: 10px; display: none; line-height: 1.6;
+}
+.step.active .step-desc { display: block; }
+
+/* CODE BLOCKS */
+.code-block {
+  background: #0a0c14;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px; margin: 10px 0 6px;
+  font-family: var(--mono); font-size: 12px; color: #c9d1e8;
+  white-space: pre; overflow-x: auto; position: relative;
+}
+.copy-btn {
+  position: absolute; top: 8px; right: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 11px; font-family: var(--sans);
+  border-radius: 5px; padding: 3px 9px; cursor: pointer;
+  transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--green); color: #7a4800; border-color: var(--green); }
+
+/* VERIFY BOX */
+.verify-box {
+  background: rgba(250,188,95,0.07);
+  border: 1px solid rgba(250,188,95,0.3);
+  border-radius: 8px; padding: 12px 16px; margin: 10px 0 4px;
+  font-size: 13px; color: var(--green);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.verify-box svg { width: 16px; height: 16px; fill: var(--green); flex-shrink: 0; margin-top: 1px; }
+
+/* INFO NOTE */
+.info-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; display: flex; align-items: flex-start; gap: 6px; }
+.info-note svg { width: 13px; height: 13px; fill: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
+
+/* IMG THUMBNAILS */
+.img-row { display: flex; gap: 12px; margin: 14px 0 8px; flex-wrap: wrap; }
+.img-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.img-thumb {
+  width: 140px; height: 85px; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--border-strong);
+  cursor: zoom-in; transition: border-color 0.15s, transform 0.15s;
+}
+.img-thumb:hover { border-color: var(--green); transform: scale(1.03); }
+.img-caption { font-size: 11px; color: var(--text-dim); text-align: center; max-width: 140px; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88); z-index: 9999;
+  align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+.lightbox img {
+  max-width: 90vw; max-height: 88vh;
+  border-radius: 10px; border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+}
+.lightbox-close {
+  position: absolute; top: 20px; right: 28px;
+  color: #fff; font-size: 28px; cursor: pointer; line-height: 1;
+  background: rgba(255,255,255,0.1); border-radius: 50%;
+  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.2); }
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted); letter-spacing: 0.08em;
+  text-transform: uppercase; margin: 28px 0 12px;
+}
+
+/* CONN TABS */
+.conn-tabs { display: flex; gap: 8px; margin: 4px 0 14px; }
+.conn-tab {
+  padding: 7px 18px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border);
+  border-radius: 100px; background: transparent; color: var(--text-muted);
+  transition: all 0.15s; user-select: none;
+}
+.conn-tab:hover { border-color: var(--border-strong); color: var(--text); }
+.conn-tab.active { background: var(--green); color: #7a4800; border-color: var(--green); font-weight: 600; }
+.conn-panel { display: none; }
+.conn-panel.active { display: block; }
+.conn-label { font-size: 12px; font-weight: 500; color: var(--text-muted); margin: 10px 0 4px; }
+
+/* DIVIDER */
+.divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+/* STEP 4 LIST + WARNING */
+.step-list { margin: 10px 0 8px 20px; padding-left: 4px; color: var(--text-muted); }
+.step-list li { margin: 7px 0; padding-left: 4px; }
+.step-list li::marker { color: var(--green); }
+.danger-note {
+  margin-top: 12px; padding: 12px 14px; border-radius: 8px;
+  background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.38);
+  color: #ff7b7b; font-size: 12px; line-height: 1.6;
+}
+.danger-note strong { color: #ff5f5f; }
+
+/* VERTICAL NOTE LISTS */
+.note-list { margin: 0; padding-left: 18px; color: inherit; }
+.note-list li { margin: 5px 0; padding-left: 2px; }
+.note-list li::marker { color: var(--green); }
+.verify-box .note-list, .info-note .note-list { flex: 1; min-width: 0; }
+
+
+/* CODEX PATH GENERATOR */
+.path-generator { margin: 12px 0; padding: 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
+.path-input { width: 100%; margin-top: 7px; padding: 10px 12px; background: #0a0c14; color: var(--text); border: 1px solid var(--border-strong); border-radius: 7px; font-family: var(--mono); font-size: 12px; outline: none; }
+.path-input:focus { border-color: var(--green); }
+.path-hint { margin-top: 7px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.path-input.invalid { border-color: #ef4444; box-shadow: 0 0 0 1px rgba(239,68,68,0.18); }
+.path-error { display:none; margin-top:7px; padding:8px 10px; border-radius:6px; background:rgba(239,68,68,0.10); border:1px solid rgba(239,68,68,0.38); color:#ff7b7b; font-size:11px; line-height:1.5; }
+.path-error.show { display:block; }
+.generated-code.invalid-output { opacity:.45; }
+.generated-code.invalid-output .copy-btn { pointer-events:none; opacity:.45; }
+.note-list { margin:0; padding-left:18px; color:inherit; }
+.note-list li { margin:5px 0; }
+.note-list li::marker { color:var(--green); }
+.verify-box .note-list, .info-note .note-list { flex:1; }
+.generated-code { min-height: 48px; white-space: pre-wrap; word-break: break-all; }
+
+@media (max-width: 600px) {
+  .main { padding: 20px 14px 48px; }
+  .header { padding: 14px 16px; }
+  .repo-tab { padding: 8px 12px; font-size: 12px; }
+  .img-thumb { width: 110px; height: 66px; }
+  .code-block { font-size: 11px; }
+}
+
+/* CTA fijo — Reto Revit + AI */
+body { padding-bottom: 86px; }
+.challenge-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  padding: 12px 20px; background: rgba(10,12,18,.96);
+  border-top: 1px solid rgba(255,184,77,.32); backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px); box-shadow: 0 -8px 28px rgba(0,0,0,.28);
+}
+.challenge-copy { color: #e9edf7; font-size: 14px; line-height: 1.35; }
+.challenge-copy strong { color: #ffbf5a; }
+.challenge-btn {
+  position: relative; overflow: hidden; flex: 0 0 auto; text-decoration: none;
+  color: #16110a; background: linear-gradient(135deg,#ffd27a,#ffad3d);
+  font-weight: 800; font-size: 13px; letter-spacing: .02em;
+  padding: 11px 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,.45);
+  box-shadow: 0 0 0 0 rgba(255,183,74,.35); transition: transform .2s ease, box-shadow .2s ease;
+}
+.challenge-btn::after { content:""; position:absolute; top:-40%; left:-35%; width:25%; height:180%; background:rgba(255,255,255,.45); transform:rotate(20deg); animation:ctaShine 3s ease-in-out infinite; }
+.challenge-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,174,61,.25); }
+@keyframes ctaShine { 0%,65%{left:-35%} 85%,100%{left:125%} }
+@media (prefers-reduced-motion: reduce){ .challenge-btn::after{animation:none} .challenge-btn{transition:none} }
+@media (max-width: 600px) {
+  body { padding-bottom: 112px; }
+  .main { padding-left: 12px; padding-right: 12px; padding-bottom: 44px; }
+  .header { align-items:flex-start; gap:8px; }
+  .header-title { font-size: 16px; }
+  .header-sub { font-size: 11px; }
+  .header-badge { display:none; }
+  .prereqs { gap:6px; }
+  .tag { font-size:10px; }
+  .step { grid-template-columns: 36px minmax(0,1fr); }
+  .step-desc, .conn-panel, .verify-box, .info-note { min-width:0; }
+  .code-block { overflow-x:auto; white-space:pre; -webkit-overflow-scrolling:touch; }
+  .path-input { width:100%; box-sizing:border-box; font-size:16px; }
+  .conn-tabs { display:flex; width:100%; gap:8px; }
+  .conn-tab { flex:1; min-width:0; padding:10px 8px; }
+  .challenge-bar { padding: 9px 10px; gap: 9px; justify-content:space-between; }
+  .challenge-copy { font-size: 11px; max-width: 58%; }
+  .challenge-btn { font-size: 11px; padding: 10px 12px; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-close" onclick="closeLightbox()" role="button" aria-label="Cerrar">&times;</div>
+  <img id="lightbox-img" src="" alt="Captura ampliada">
+</div>
+
+<header class="header">
+  <div>
+    <div class="header-title">MCP Server para Revit</div>
+    <div class="header-sub">Guía de instalación paso a paso — BIM al Toque</div>
+  </div>
+  <div class="header-badge">pyRevit + LLM</div>
+</header>
+
+<main class="main">
+
+<!-- ============================================================ -->
+<!-- PANEL DEMOLINATOR -->
+<!-- ============================================================ -->
+<div id="panel-demolinator" class="repo-panel active">
+
+  <div class="prereqs">
+    <span class="tag tag-req">Windows 10/11</span>
+    <span class="tag tag-req">Revit 2024–2027</span>
+    <span class="tag tag-req">pyRevit instalado</span>
+    <span class="tag tag-req">Git instalado</span>
+    <span class="tag tag-req">uv (gestor Python)</span>
+    <span class="tag tag-note">Modelo abierto en Revit</span>
+  </div>
+  <div class="prereq-note">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span>Descarga pyRevit en <a href="https://github.com/pyrevitlabs/pyRevit/releases" target="_blank">github.com/pyrevitlabs/pyRevit/releases</a> — instala el <code>.exe</code> y reinicia Revit. Verifica que aparezca la pestaña pyRevit en la cinta. Git es requerido para clonar el repo: descárgalo en <a href="https://git-scm.com/download/win" target="_blank">git-scm.com/download/win</a>.</span>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progreso de instalación</span>
+      <span id="d-prog-label">0 / 6</span>
+    </div>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="d-progress" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="steps" id="d-steps">
+
+    <div class="step active" id="d-step-0">
+      <div class="step-num" onclick="toggleStep('d',0)">1</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',0)">Instalar uv (gestor de paquetes Python)</div>
+          <div class="step-check" onclick="markStep('d',0)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          Abre PowerShell y ejecuta:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</div>
+          Verifica la instalación:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>uv --version</div>
+          <div class="info-note">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Si ya tienes uv instalado, salta al paso 2.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="d-step-1">
+      <div class="step-num" onclick="toggleStep('d',1)">2</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',1)">Instalar Git</div>
+          <div class="step-check" onclick="markStep('d',1)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          Git es necesario para clonar el repositorio en el paso siguiente. Descarga e instala la versión para Windows:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>https://git-scm.com/download/win</div>
+          Verifica la instalación abriendo una terminal nueva:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>git --version</div>
+          <div class="info-note">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Si ya tienes Git instalado, salta al paso 3.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="d-step-2">
+      <div class="step-num" onclick="toggleStep('d',2)">3</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',2)">Clonar e instalar dependencias</div>
+          <div class="step-check" onclick="markStep('d',2)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          Abre PowerShell y clona el repositorio directamente dentro de la carpeta de extensiones de pyRevit:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>cd "$env:APPDATA\pyRevit\Extensions"
+git clone https://github.com/Demolinator/revit-mcp-server.git revit-mcp.extension
+cd revit-mcp.extension
+uv sync</div>
+          <div class="info-note">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <ul class="note-list">
+              <li>El nombre debe terminar en <code>.extension</code> para que pyRevit lo reconozca.</li>
+              <li>Si ya clonaste la carpeta como <code>revit-mcp-server</code>, renómbrala a <code>revit-mcp.extension</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="d-step-3">
+      <div class="step-num" onclick="toggleStep('d',3)">4</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',3)">Comprobar la extensión en pyRevit</div>
+          <div class="step-check" onclick="markStep('d',3)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          La estructura debe quedar así:
+          <div class="code-block">%APPDATA%\pyRevit\Extensions\
+└── revit-mcp.extension\
+    ├── startup.py
+    ├── revit_mcp\
+    ├── main.py
+    └── ...</div>
+          <ul class="step-list">
+            <li>Estás usando la carpeta <code>%APPDATA%\pyRevit\Extensions</code> que pyRevit ya utiliza.</li>
+            <li>No necesitas agregar esa misma ruta otra vez en <strong>Custom Extension Directories</strong>.</li>
+          </ul>
+          <div class="danger-note">
+            <strong>No instales “MCP Server for Revit Python” desde el Extensions Manager de pyRevit.</strong> Demolinator advierte que esa entrada instala el proyecto upstream original y no incluye la mayoría de las 48 rutas que usa este servidor.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="d-step-4">
+      <div class="step-num" onclick="toggleStep('d',4)">5</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',4)">Activar Routes Server en pyRevit</div>
+          <div class="step-check" onclick="markStep('d',4)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          <div class="code-block">Revit → pyRevit tab → Settings / Configuración
+→ Routes / Rutas
+→ ☑ Enable Routes Server
+→ Puerto 48884
+→ Save Settings → Reload</div>
+          El servidor de Routes debe quedar escuchando en <code>http://localhost:48884/</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="d-step-5">
+      <div class="step-num" onclick="toggleStep('d',5)">6</div>
+      <div class="step-body">
+        <div class="step-header">
+          <div class="step-label" onclick="toggleStep('d',5)">Verificar que Revit responde</div>
+          <div class="step-check" onclick="markStep('d',5)" title="Marcar como listo">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:#7a4800;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="step-desc">
+          Con Revit abierto y un proyecto cargado, abre el navegador en:
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>http://localhost:48884/revit_mcp/status/</div>
+          Respuesta esperada:
+          <div class="code-block">{"status": "active", "health": "healthy",
+ "revit_available": true,
+ "document_title": "tu_proyecto"}</div>
+          <div class="info-note">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <ul class="note-list">
+              <li>Si ves <code>"status": "active"</code> y el nombre de tu proyecto, Revit + pyRevit Routes están listos.</li>
+              <li>Si aparece un <strong>404</strong>, la extensión no se cargó.</li>
+              <li>Si la página no abre, Routes está apagado o Revit está cerrado.</li>
+            </ul>
+          </div>
+          <div class="verify-box">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Revit ya está listo. Ahora configura tu cliente IA en la sección inferior.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section-title">Conexión al cliente IA</div>
+  <div class="conn-tabs">
+    <button class="conn-tab active" onclick="switchConn('d','claude')">Claude Desktop</button>
+    <button class="conn-tab" onclick="switchConn('d','codex')">Codex</button>
+  </div>
+
+  <div id="d-conn-claude" class="conn-panel active">
+    <div class="conn-label">Claude Desktop → Settings → Developer → Edit Config</div>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>{
+  "mcpServers": {
+    "revit": {
+      "command": "uv",
+      "args": ["run", "--directory", "C:/Users/User/AppData/Roaming/pyRevit/Extensions/revit-mcp.extension", "main.py"]
+    }
+  }
+}</div>
+    <div class="info-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <ul class="note-list">
+        <li>Si tu usuario de Windows no es <code>User</code>, reemplázalo por el tuyo.</li>
+        <li>Claude Desktop iniciará el servidor MCP por <strong>stdio</strong>.</li>
+        <li>No necesitas dejar <code>uv run main.py</code> abierto aparte.</li>
+        <li>Cierra y reabre Claude Desktop para aplicar los cambios.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="d-conn-codex" class="conn-panel">
+    <div class="conn-label">1. Instala Codex CLI (solo una vez)</div>
+    <div class="info-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <ul class="note-list">
+        <li>Si ya tienes Codex CLI instalado, continúa al paso 2.</li>
+        <li>Guía oficial: <a href="https://learn.chatgpt.com/docs/codex/cli#getting-started" target="_blank" rel="noopener noreferrer"><strong>Codex CLI | ChatGPT Learn</strong></a>.</li>
+        <li>Después de instalarlo, cierra PowerShell, abre una ventana nueva y verifica con <code>codex --version</code>.</li>
+      </ul>
+    </div>
+
+    <div class="conn-label">2. Comprueba que Demolinator está activo en Revit</div>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>http://localhost:48884/revit_mcp/status/</div>
+    <div class="info-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <ul class="note-list">
+        <li>Mantén <strong>Revit abierto</strong> con un proyecto abierto y Demolinator habilitado.</li>
+        <li>La respuesta debe mostrar <code>"status": "active"</code>.</li>
+      </ul>
+    </div>
+
+    <div class="conn-label">3. Pega la ruta de la carpeta de Demolinator</div>
+    <input id="dem-codex-path" class="path-input" type="text" oninput="generateDemCodexCommand()" placeholder="C:\Users\TU_USER\AppData\Roaming\pyRevit\Extensions\revit-mcp.extension">
+    <div id="dem-codex-path-error" class="path-error">Ruta no válida. Debe terminar exactamente en <code>revit-mcp.extension</code>.</div>
+    <div class="conn-label">Registra Demolinator en Codex:</div>
+    <div id="dem-codex-command" class="code-block generated-code invalid-output"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>codex mcp add pyRevit-MCP -- uv run --directory "PEGA_UNA_RUTA_DE_DEMOLINATOR_VALIDA" main.py</div>
+    <div class="info-note">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <ul class="note-list">
+        <li><code>pyRevit-MCP</code> es el nombre con el que Codex guardará esta conexión.</li>
+        <li>Si ya tienes otro MCP registrado con ese mismo nombre, elimínalo primero con <code>codex mcp remove pyRevit-MCP</code> o utiliza otro nombre.</li>
+        <li>En Demolinator se mantiene <code>main.py</code> sin anteponer <code>python</code>.</li>
+      </ul>
+    </div>
+
+    <div class="conn-label">4. Verifica que quedó registrado</div>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>codex mcp list</div>
+
+    <div class="conn-label">5. Inicia Codex y prueba la conexión con Revit</div>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>codex</div>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this,event)">copiar</button>Obtén la información del modelo de Revit actualmente abierto.</div>
+    <div class="verify-box">
+      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <ul class="note-list">
+        <li>Si Codex devuelve información del modelo, el flujo <strong>Codex → Demolinator → pyRevit → Revit</strong> está funcionando.</li>
+        <li>Para quitar esta conexión más adelante: <code>codex mcp remove pyRevit-MCP</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+
+<footer class="challenge-bar" aria-label="Únete al reto Revit más IA en 7 días">
+  <div class="challenge-copy">¿Quieres llevarlo a la práctica? <strong>Únete al reto REVIT + AI en 7 días</strong> dentro de BIM al Toque.</div>
+  <a class="challenge-btn" href="https://www.skool.com/bim-al-toque-9649/about" target="_blank" rel="noopener noreferrer">ÚNETE AL RETO →</a>
+</footer>
+
+<script>
+var dDone=[false,false,false,false,false,false];
+var mDone=[false,false,false,false,false];
+
+/* Solo colapsa/expande el contenido del paso */
+function toggleStep(p,i){
+  var steps=document.getElementById(p+'-steps').children;
+  var el=steps[i];
+  if(el.classList.contains('active')){
+    el.classList.remove('active');
+  }else{
+    for(var j=0;j<steps.length;j++)steps[j].classList.remove('active');
+    el.classList.add('active');
+  }
+}
+
+/* Solo marca/desmarca el checkbox del paso — independiente del colapso */
+function markStep(p,i){
+  var steps=document.getElementById(p+'-steps').children;
+  var arr=p==='d'?dDone:mDone;
+  var el=steps[i];
+  var check=el.querySelector('.step-check');
+  var svg=check.querySelector('svg');
+  if(arr[i]){
+    // desmarcar
+    arr[i]=false;
+    el.classList.remove('done');
+    svg.style.display='none';
+  }else{
+    // marcar
+    arr[i]=true;
+    el.classList.add('done');
+    svg.style.display='block';
+  }
+  updateProg(p);
+}
+
+function updateProg(p){
+  var arr=p==='d'?dDone:mDone;
+  var done=arr.filter(Boolean).length;
+  var total=p==='d'?6:5;
+  document.getElementById(p+'-progress').style.width=Math.round(done/total*100)+'%';
+  document.getElementById(p+'-prog-label').textContent=done+' / '+total;
+}
+
+function switchRepo(r){
+  document.querySelectorAll('.repo-tab').forEach(function(t,i){
+    t.classList.toggle('active',(r==='demolinator'&&i===0)||(r==='mcp4revit'&&i===1));
+  });
+  document.getElementById('panel-demolinator').classList.toggle('active',r==='demolinator');
+  document.getElementById('panel-mcp4revit').classList.toggle('active',r==='mcp4revit');
+}
+
+function switchConn(p,c){
+  var parent=document.getElementById('panel-'+(p==='d'?'demolinator':'mcp4revit'));
+  parent.querySelectorAll('.conn-tab').forEach(function(t,i){
+    t.classList.toggle('active',(c==='claude'&&i===0)||(c==='codex'&&i===1));
+  });
+  document.getElementById(p+'-conn-claude').classList.toggle('active',c==='claude');
+  document.getElementById(p+'-conn-codex').classList.toggle('active',c==='codex');
+}
+
+function validateExtensionPath(raw){
+  var path=(raw||'').trim().replace(/^['"]|['"]$/g,'');
+  if(!path) return {empty:true, valid:false, extension:'', main:''};
+  path=path.replace(/\//g,'\\').replace(/[\\]+$/,'');
+  var valid=/mcp-server-for-revit-python\.extension$/i.test(path);
+  return {empty:false, valid:valid, extension:path, main:valid ? path+'\\main.py' : ''};
+}
+
+function setPathState(input,error,block,state){
+  input.classList.toggle('invalid',!state.empty && !state.valid);
+  if(error) error.classList.toggle('show',!state.empty && !state.valid);
+  if(block) block.classList.toggle('invalid-output',!state.valid);
+}
+
+function generateClaudeConfig(){
+  var input=document.getElementById('claude-main-path');
+  var box=document.getElementById('claude-generated-config');
+  var error=document.getElementById('claude-path-error');
+  if(!input||!box)return;
+  var state=validateExtensionPath(input.value);
+  setPathState(input,error,box,state);
+  var displayPath=state.valid ? state.extension.replace(/\\/g,'\\\\') : 'PEGA_UNA_RUTA_DE_EXTENSION_VALIDA';
+  var config='{\n  "mcpServers": {\n    "pyRevit-MCP": {\n      "command": "uv",\n      "args": [\n        "run", "--directory",\n        "'+displayPath+'",\n        "python", "main.py"\n      ]\n    }\n  }\n}';
+  var btn=box.querySelector('.copy-btn');
+  box.textContent=config;
+  box.insertBefore(btn,box.firstChild);
+}
+
+function generateCodexCommand(){
+  var input=document.getElementById('codex-main-path');
+  var block=document.getElementById('codex-generated-command');
+  var error=document.getElementById('codex-path-error');
+  if(!input||!block)return;
+  var state=validateExtensionPath(input.value);
+  setPathState(input,error,block,state);
+  var shown=state.valid ? state.extension : 'PEGA_UNA_RUTA_DE_EXTENSION_VALIDA';
+  var cmd='codex mcp add pyRevit-MCP -- uv run --directory "'+shown+'" python main.py';
+  var btn=block.querySelector('.copy-btn');
+  block.childNodes.forEach(function(n){ if(n.nodeType===3)n.remove(); });
+  block.appendChild(document.createTextNode(cmd));
+  if(btn)block.insertBefore(btn,block.firstChild);
+}
+
+function generateDemCodexCommand(){
+  var input=document.getElementById('dem-codex-path');
+  var block=document.getElementById('dem-codex-command');
+  var error=document.getElementById('dem-codex-path-error');
+  if(!input||!block)return;
+  var path=(input.value||'').trim().replace(/^['"]|['"]$/g,'').replace(/\//g,'\\').replace(/[\\]+$/,'');
+  var empty=!path;
+  var valid=/revit-mcp\.extension$/i.test(path);
+  input.classList.toggle('invalid',!empty && !valid);
+  if(error) error.classList.toggle('show',!empty && !valid);
+  block.classList.toggle('invalid-output',!valid);
+  var shown=valid ? path : 'PEGA_UNA_RUTA_DE_DEMOLINATOR_VALIDA';
+  var cmd='codex mcp add pyRevit-MCP -- uv run --directory "'+shown+'" main.py';
+  var btn=block.querySelector('.copy-btn');
+  block.childNodes.forEach(function(n){ if(n.nodeType===3)n.remove(); });
+  block.appendChild(document.createTextNode(cmd));
+  if(btn)block.insertBefore(btn,block.firstChild);
+}
+
+function copyCode(btn,e){
+  e.stopPropagation();
+  var block=btn.parentElement;
+  var txt=block.innerText.replace('copiar','').trim();
+  navigator.clipboard.writeText(txt).then(function(){
+    btn.textContent='✓';
+    setTimeout(function(){btn.textContent='copiar';},1500);
+  });
+}
+
+function openLightbox(src,e){
+  e.stopPropagation();
+  var lb=document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src=src;
+  lb.classList.add('open');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
+</script>
+
+</body>
+</html>
